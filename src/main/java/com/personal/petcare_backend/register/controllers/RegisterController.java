@@ -13,34 +13,28 @@ import com.personal.petcare_backend.users.dtos.UserDto;
 
 @RestController
 @RequestMapping(path = "/api/v1/register")
-
 public class RegisterController {
 
-    RegisterServices service;
+    private final RegisterServices service;
 
     @Autowired
-
     public RegisterController(RegisterServices service) {
         this.service = service;
     }
 
     @PostMapping
-    public ResponseEntity<String> register(@RequestHeader String username, @RequestHeader String password) {
-
+    public ResponseEntity<String> register(@RequestHeader("username") String username,
+            @RequestHeader("password") String password) {
         try {
             UserDto newUser = new UserDto();
             newUser.setUsername(username);
             newUser.setPassword(password);
-            System.out.println("--------------------------------------------------" + newUser.getUsername());
-            service.save(newUser);
+            service.registerUser(newUser);
             return ResponseEntity.ok("User registered!");
-
-        } 
-        
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Error al registrar el usuario");
+                    .body("Error registering user!" + e.getMessage());
         }
     }
 }

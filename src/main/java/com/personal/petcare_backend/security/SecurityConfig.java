@@ -58,7 +58,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated())
             .userDetailsService(service)
             .httpBasic(basic -> basic.authenticationEntryPoint(myBasicAuthenticationEntryPoint))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
     
         http.addFilterBefore(new FirebaseAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
            .headers(header -> header.frameOptions(frame -> frame.sameOrigin()));
