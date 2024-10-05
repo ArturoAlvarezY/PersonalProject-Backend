@@ -35,12 +35,12 @@ public class RegisterServices {
     public String registerUser(UserDto newUserDto) {
         try {
             UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                    .setEmail(newUserDto.getUsername()) 
+                    .setEmail(newUserDto.getUsername())
                     .setPassword(newUserDto.getPassword());
-            
+
             UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
 
-            return save(newUserDto); 
+            return save(newUserDto);
         } catch (FirebaseAuthException e) {
             System.out.println("There was a error to register the user: " + e.getMessage());
             throw new SaveUserException("Error of register user in firebase");
@@ -56,20 +56,19 @@ public class RegisterServices {
             String passwordEncoded = encoderFacade.encode("bcrypt", passwordDecoded);
 
             User user = new User(newUserDto.getUsername(), passwordEncoded);
-            user.setRoles(assignDefaultRole()); 
+            user.setRoles(assignDefaultRole());
 
             repository.save(user);
 
             return user.getUsername();
         } catch (Exception e) {
             System.out.println(e);
+            throw new SaveUserException("Can not save the user!");
         }
-
-        throw new SaveUserException("Can not save the user!");
     }
 
     public Set<Role> assignDefaultRole() {
-        Role defaultRole = roleService.getById(1L); 
+        Role defaultRole = roleService.getById(1L);
 
         Set<Role> roles = new HashSet<>();
         roles.add(defaultRole);
