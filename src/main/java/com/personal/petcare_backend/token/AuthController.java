@@ -19,6 +19,8 @@ public class AuthController {
 
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
             String uid = decodedToken.getUid();
+
+            System.out.println(decodedToken);
             return ResponseEntity.ok("Token verified! User ID: " + uid);
         } catch (FirebaseAuthException e) {
             return ResponseEntity.status(401).body("Invalid token");
