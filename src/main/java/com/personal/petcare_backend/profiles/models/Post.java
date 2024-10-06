@@ -1,5 +1,7 @@
 package com.personal.petcare_backend.profiles.models;
 
+import com.google.firebase.database.annotations.NotNull;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -16,13 +18,15 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     private String title;
 
+    @NotNull
     private String content;
 
-    private String imageUrl;
+    private String imageUrl; 
     @ManyToOne
-    @JoinColumn(name = "profile_id")
+    @JoinColumn(name = "profile_id" )
     private Profile profile;
 
     public Post() {
@@ -35,7 +39,6 @@ public class Post {
         this.imageUrl = imageUrl;
         this.profile = profile;
     }
-
     public Long getId() {
         return id;
     }

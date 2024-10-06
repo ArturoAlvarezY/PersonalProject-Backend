@@ -87,9 +87,5 @@ public class User {
         this.roles = roles;
     }
 
-    public Long getId() {
-        return id;
-    }
-
 }
 
