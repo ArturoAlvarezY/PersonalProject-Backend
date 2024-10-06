@@ -10,3 +10,7 @@ INSERT INTO users (id, username, password) VALUES
 INSERT INTO user_roles (role_id, user_id) VALUES 
 (1, 1),
 (2, 2);
+
+INSERT INTO profiles (id, user_id) VALUES
+(default, 1),
+(default, 2);

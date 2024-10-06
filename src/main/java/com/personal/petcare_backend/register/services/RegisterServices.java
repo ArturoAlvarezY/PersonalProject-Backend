@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.personal.petcare_backend.implementatios.IEncryptFacade;
+import com.personal.petcare_backend.profiles.models.Profile;
 import com.personal.petcare_backend.register.exceptions.SaveUserException;
 import com.personal.petcare_backend.roles.models.Role;
 import com.personal.petcare_backend.roles.services.RoleService;
@@ -41,10 +42,12 @@ public class RegisterServices {
             UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
 
             return save(newUserDto);
-        } catch (FirebaseAuthException e) {
+        } 
+        catch (FirebaseAuthException e) {
             System.out.println("There was a error to register the user: " + e.getMessage());
             throw new SaveUserException("Error of register user in firebase");
-        } catch (Exception e) {
+        }
+         catch (Exception e) {
             System.out.println(e);
             throw new SaveUserException("the user cant be saved.");
         }
@@ -57,6 +60,12 @@ public class RegisterServices {
 
             User user = new User(newUserDto.getUsername(), passwordEncoded);
             user.setRoles(assignDefaultRole());
+            repository.save(user);
+
+            Profile profile = new Profile(); 
+            profile.setUser(user);
+
+            user.setProfile(profile);
 
             repository.save(user);
 
@@ -65,7 +74,7 @@ public class RegisterServices {
             System.out.println(e);
             throw new SaveUserException("Can not save the user!");
         }
-    }
+    }        
 
     public Set<Role> assignDefaultRole() {
         Role defaultRole = roleService.getById(1L);
