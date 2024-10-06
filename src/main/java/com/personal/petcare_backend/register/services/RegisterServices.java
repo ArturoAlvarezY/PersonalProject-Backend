@@ -5,6 +5,8 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.personal.petcare_backend.implementatios.IEncryptFacade;
 import com.personal.petcare_backend.profiles.models.Profile;
@@ -32,8 +34,24 @@ public class RegisterServices {
         this.roleService = roleService;
         this.encoderFacade = encoderFacade;
     }
+    
 
-    public String registerUser(UserDto newUserDto) {
+    public Set<Role> assignAdminRole() {
+        Role adminRole = roleService.getById(1L);  
+        Set<Role> roles = new HashSet<>();
+        roles.add(adminRole);
+        return roles;
+    }
+
+    public Set<Role> assignDefaultRole() {
+        Role userRole = roleService.getById(2L);  
+        Set<Role> roles = new HashSet<>();
+        roles.add(userRole);
+        return roles;
+    }
+    
+    @PostMapping
+    public String registerUser(@RequestBody UserDto newUserDto) {
         try {
             UserRecord.CreateRequest request = new UserRecord.CreateRequest()
                     .setEmail(newUserDto.getUsername())
@@ -41,47 +59,40 @@ public class RegisterServices {
 
             UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
 
-            return save(newUserDto);
-        } 
-        catch (FirebaseAuthException e) {
-            System.out.println("There was a error to register the user: " + e.getMessage());
-            throw new SaveUserException("Error of register user in firebase");
-        }
-         catch (Exception e) {
-            System.out.println(e);
-            throw new SaveUserException("the user cant be saved.");
+            return save(newUserDto, userRecord.getUid());
+
+        } catch (FirebaseAuthException e) {
+            System.out.println("There was an error registering the user: " + e.getMessage());
+            throw new SaveUserException("Error registering user in Firebase");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            throw new SaveUserException("The user can't be saved.");
         }
     }
 
-    public String save(UserDto newUserDto) {
+
+    public String save(UserDto newUserDto, String firebaseUid) {
         try {
             String passwordDecoded = encoderFacade.decode("base64", newUserDto.getPassword());
             String passwordEncoded = encoderFacade.encode("bcrypt", passwordDecoded);
 
             User user = new User(newUserDto.getUsername(), passwordEncoded);
-            user.setRoles(assignDefaultRole());
-            repository.save(user);
+            if (newUserDto.getUsername().equalsIgnoreCase("adminLucas@gmail.com")) { 
+                user.setRoles(assignAdminRole());
+            } else {
+                user.setRoles(assignDefaultRole());
+            }
 
-            Profile profile = new Profile(); 
+            Profile profile = new Profile();
             profile.setUser(user);
-
             user.setProfile(profile);
 
             repository.save(user);
 
             return user.getUsername();
         } catch (Exception e) {
-            System.out.println(e);
-            throw new SaveUserException("Can not save the user!");
+            System.out.println("Error: " + e.getMessage());
+            throw new SaveUserException("Cannot save the user!");
         }
-    }        
-
-    public Set<Role> assignDefaultRole() {
-        Role defaultRole = roleService.getById(1L);
-
-        Set<Role> roles = new HashSet<>();
-        roles.add(defaultRole);
-
-        return roles;
     }
 }
