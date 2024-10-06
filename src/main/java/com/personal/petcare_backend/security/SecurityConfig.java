@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .requestMatchers(AntPathRequestMatcher.antMatcher("api/v1/auth/register")).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/login").hasAnyRole("USER", "ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/v1/upload-image").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/allposts").hasRole("Admin")
                 .requestMatchers(HttpMethod.POST, "/api/v1/register").permitAll()
                 .anyRequest().authenticated())
             .userDetailsService(service)

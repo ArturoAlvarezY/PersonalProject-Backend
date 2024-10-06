@@ -3,11 +3,15 @@ package com.personal.petcare_backend.profiles.controllers;
 import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import com.personal.petcare_backend.profiles.exceptions.PostNotFoundException;
 import com.personal.petcare_backend.profiles.postdto.PostDto;
 import com.personal.petcare_backend.profiles.service.PostService;
+import com.personal.petcare_backend.users.models.User;
+import com.personal.petcare_backend.users.repository.UserRepository;
 
 import java.nio.file.AccessDeniedException;
 import java.util.List;
@@ -19,6 +23,9 @@ public class PostController {
     @Autowired
     private PostService service;
 
+    @Autowired
+    UserRepository userRepository;
+
     @PostMapping
     public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto, @RequestParam Long userId) {
         PostDto savedPost = service.createPost(postDto, userId);
@@ -29,7 +36,7 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedPost);
     }
 
-    @GetMapping
+    @GetMapping("/allposts")
     public ResponseEntity<List<PostDto>> getAllPosts() {
         List<PostDto> posts = service.getAllPosts();
         return ResponseEntity.ok(posts);
@@ -67,8 +74,12 @@ public class PostController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id, @RequestParam Long userId) {
-        service.deletePost(id, userId);
+    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        service.deletePost(id, user.getId());
         return ResponseEntity.noContent().build();
     }
 }

@@ -2,14 +2,18 @@ package com.personal.petcare_backend.profiles.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.personal.petcare_backend.users.models.User;
 import com.personal.petcare_backend.profiles.exceptions.PostNotFoundException;
 import com.personal.petcare_backend.profiles.models.Post;
 import com.personal.petcare_backend.profiles.models.Profile;
 import com.personal.petcare_backend.profiles.postdto.PostDto;
 import com.personal.petcare_backend.profiles.repository.PostRepository;
 import com.personal.petcare_backend.profiles.repository.ProfileRepository;
+import com.personal.petcare_backend.users.exceptions.UserNameNotFoundException;
+import com.personal.petcare_backend.users.repository.UserRepository;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,8 +24,10 @@ public class PostService {
     @Autowired
     private PostRepository postRepository;
     @Autowired
-    private  ProfileRepository profileRepository;
-    
+    private ProfileRepository profileRepository;
+    @Autowired
+    private UserRepository userRepository;
+
     private PostDto convertToDto(Post post) {
         PostDto postDto = new PostDto();
         postDto.setId(post.getId());
@@ -49,12 +55,13 @@ public class PostService {
     public List<PostDto> getPostsByProfile(Long profileId) {
         Profile profile = profileRepository.findById(profileId)
                 .orElseThrow(() -> new PostNotFoundException("Profile not found with id: " + profileId));
-        
+
         List<Post> posts = postRepository.findByProfile(profile);
         return posts.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
+
     public List<PostDto> getAllPosts() {
         List<Post> posts = postRepository.findAll();
         return posts.stream()
@@ -62,34 +69,43 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    public void deletePost(Long id, Long userId) {
-        Post existingPost = postRepository.findById(id)
-                .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + id));
-
-        Profile profile = existingPost.getProfile();
-        if (profile == null || profile.getUser() == null || !profile.getUser().getId().equals(userId)) {
-            throw new AccessDeniedException("You do not have permission to delete this post.");
-        }
-
-        postRepository.delete(existingPost);
+    private boolean hasEditPermission(Post post, User user) {
+        return (post.getProfile() != null && post.getProfile().getId().equals(user.getId())) || user.getId().equals(1L);
     }
 
-    public PostDto updatePost(Long id, PostDto updatedPostDto, Long userId) {
-        Post existingPost = postRepository.findById(id)
-                .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + id));
+    public PostDto updatePost(Long postId, PostDto postDto, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException("Post not found"));
 
-        Profile profile = existingPost.getProfile();
-        if (profile == null || profile.getUser() == null || !profile.getUser().getId().equals(userId)) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNameNotFoundException("User not found"));
+
+        if (!hasEditPermission(post, user)) {
             throw new AccessDeniedException("You do not have permission to edit this post.");
         }
 
-        existingPost.setContent(updatedPostDto.getContent());
-        existingPost.setTitle(updatedPostDto.getTitle());
-        existingPost.setImageUrl(updatedPostDto.getImageUrl());
-        
-        postRepository.save(existingPost);
+        post.setTitle(postDto.getTitle());
+        post.setContent(postDto.getContent());
 
-        return convertToDto(existingPost);
+        Post updatedPost = postRepository.save(post);
+
+        PostDto updatedPostDto = new PostDto();
+        updatedPostDto.setId(updatedPost.getId());
+        updatedPostDto.setTitle(updatedPost.getTitle());
+        updatedPostDto.setContent(updatedPost.getContent());
+
+        return updatedPostDto;
     }
 
+    public void deletePost(Long postId, Long userId) {
+        Post existingPost = postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException("Post not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        if (!hasEditPermission(existingPost, user)) {
+            throw new AccessDeniedException("You do not have permission to delete this post.");
+        }
+}
 }
