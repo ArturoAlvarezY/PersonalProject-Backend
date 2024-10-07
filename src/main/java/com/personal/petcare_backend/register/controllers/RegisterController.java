@@ -26,7 +26,7 @@ public class RegisterController {
     public ResponseEntity<String> register(@RequestHeader("username") String username,
             @RequestHeader("password") String password) {
         try {
-            UserDto newUser = new UserDto();
+            UserDto newUser = new UserDto(password, password);
             newUser.setUsername(username);
             newUser.setPassword(password);
             service.registerUser(newUser);
