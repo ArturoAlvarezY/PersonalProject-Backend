@@ -16,7 +16,6 @@ public class PostDto {
         this.imageUrl = imageUrl;
     }
 
-    // Getters y Setters
     public Long getId() {
         return id;
     }
